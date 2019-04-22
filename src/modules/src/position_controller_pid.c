@@ -205,6 +205,10 @@ void velocityController(float* thrust, attitude_t *attitude, setpoint_t *setpoin
   // Roll and Pitch
   float rollRaw  = runPid(state->velocity.x, &this.pidVX, setpoint->velocity.x, DT);
   float pitchRaw = runPid(state->velocity.y, &this.pidVY, setpoint->velocity.y, DT);
+//  float rollRaw  = runPid(state->velocity.x, &this.pidVX, setpoint->velocity.x, DT);
+//  rollRaw 		+= runPid(state->position.x, &this.pidX, setpoint->position.x, DT);
+//  float pitchRaw = runPid(state->velocity.y, &this.pidVY, setpoint->velocity.y, DT);
+//  pitchRaw 		+= runPid(state->position.y, &this.pidY, setpoint->position.y, DT);
 
   float yawRad = state->attitude.yaw * (float)M_PI / 180;
   attitude->pitch = -(rollRaw  * cosf(yawRad)) - (pitchRaw * sinf(yawRad));
@@ -213,8 +217,10 @@ void velocityController(float* thrust, attitude_t *attitude, setpoint_t *setpoin
   attitude->roll  = constrain(attitude->roll,  -rpLimit, rpLimit);
   attitude->pitch = constrain(attitude->pitch, -rpLimit, rpLimit);
 
-  // Thrust
-  float thrustRaw = runPid(state->velocity.z, &this.pidVZ, setpoint->velocity.z, DT);
+  // Thrust; setpoint->velocity.z is actually the controlInput based on position.z and setpoint->position.z
+  //float thrustRaw = runPid(state->velocity.z, &this.pidVZ, setpoint->velocity.z, DT);
+  float thrustRaw 	= runPid(state->velocity.z, &this.pidVZ, 0, DT); // z velocity setpoint is zero in ss.
+  thrustRaw 		+= setpoint->velocity.z;
   // Scale the thrust and add feed forward term
   *thrust = thrustRaw*thrustScale + this.thrustBase;
   // Check for minimum thrust
